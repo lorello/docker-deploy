@@ -1,0 +1,15 @@
+version: "2.3"
+
+services:
+  consul:
+    image: consul:0.9.3
+
+  deploy:
+    image: deploy
+    build: .
+    depends_on:
+      - consul
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/local/bin/docker:/usr/local/bin/docker:ro
+      - /usr/local/bin/docker-compose:/usr/local/bin/docker-compose:ro

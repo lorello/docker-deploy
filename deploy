@@ -1,0 +1,669 @@
+#!/usr/bin/env bash
+
+[[ "$TRACE" ]] && set -x
+
+set -uo pipefail
+
+INCLUDE_PATH=${DEPLOY_LIBS:-"/usr/local/lib/bash/"}
+. "$INCLUDE_PATH/lib.consul.sh" || echo -e "\n\nFATAL: Missing libs"
+
+TMP_DIR=${DEPLOY_TMP:-'/tmp/deploy'}
+BACKUP_DIR=${DEPLOY_BACKUP:-'/var/backups/deploy'}
+
+# event name used in consul to comunicate a new deploy
+readonly deploy_event='deploy-job'
+readonly undeploy_event='undeploy-job'
+
+
+# populate some useful VARIABLE
+# Thanks to https://askubuntu.com/a/604691
+# export MYIP=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
+
+
+# return 0 if the function name passed as parameter exists
+_self::is_function()
+{
+    needle=${1:?"${FUNCNAME[0]}: missing param #1"}
+    typeset -F | while read function
+    do
+      echo ${function} | cut -d' ' -f 3 | grep -v '^_' | grep -q "^$needle$"
+      if [[ $? -eq 0 ]]; then
+  return 0
+      fi
+    done
+    return 1
+}
+
+
+
+init()
+{
+
+  if ! consul::isup; then
+    exit_with_error "Cannot connect to Consul server ${CONSUL_HTTP_ADDR:-localhost}"
+  else
+    echo "Using Consul @ ${CONSUL_HTTP_ADDR:-localhost}"
+  fi
+
+  if [[ ! -d ${TMP_DIR} ]]; then
+    if ! mkdir -p ${TMP_DIR} >/dev/null 2>&1; then
+      exit_with_error "Cannot create tmp dir '${TMP_DIR}'"
+      return 1
+    else
+      echo "created temporary folder '$TMP_DIR'"
+    fi
+  fi
+
+  if [[ ! -d $BACKUP_DIR ]]; then
+    if ! mkdir -p $BACKUP_DIR >/dev/null 2>&1; then
+      exit_with_error "Cannot create backup dir '$BACKUP_DIR'"
+      return 1
+    else
+      echo "created backup directory '$BACKUP_DIR'"
+    fi
+  fi
+
+  local deploy_path=$(consul::get deploy/config/path)
+  if [[ -z $deploy_path ]]; then
+    exit_with_error "Missing configuration: please add the key 'deploy/config/path' to '/srv' or another path where deploy jobs"
+    if [[ ! -d $deploy_path ]]; then
+        if ! mkdir -p $deploy_path >/dev/null 2>&1; then
+          exit_with_error "Cannot create tmp dir '$deploy_path'"
+          return 1
+        fi
+    fi
+  fi
+
+}
+
+
+# clean temporary files and dirs, to be called on signals
+clean()
+{
+    #log "Cleaning up temporary data in '${TMP_DIR}'"
+    if [[ -d "$TMP_DIR" ]]; then
+        #log_debug "Removing temporary dir ${TMP_DIR}"
+        #echo "Removing temporary dir ${TMP_DIR}"
+        rm -rf $TMP_DIR
+    fi
+
+#    echo
+#    echo "Marvin has finished, bye!"
+#    exit 0
+}
+
+# registering cleanup function
+trap clean EXIT SIGHUP SIGINT SIGTERM
+
+
+# check if a compose file is valid or not
+compose::is_valid()
+{
+  local file=$1 || return
+  filepath=$(dirname $file)
+  cd $filepath
+  if docker-compose config > /dev/null 2>&1; then
+    return 0
+  fi
+  return 1
+}
+
+
+exit_with_error()
+{
+  local error_message=$1 || return
+  echo "ERROR: $error_message"
+  exit 1
+}
+
+# this function is used to populate consul with an already deploy cluster or node:
+# it imports all compose files in a path, organized in base_path/job_name/docker-compose.yml
+deploy::import_group()
+{
+  local readonly group_name=${1:?"${FUNCNAME[0]}: error, missing parameter #1: 'group_name' where import jobs to"}
+  local readonly deploy_path=$(consul::get deploy/config/path)
+  local target= "deploy/jobs/groups/$group_name"
+
+  if ! consul::folder_exists "$target"; then
+      exit_with_error "Cannot import to non-existent group '$group_name'"
+  fi
+
+  compose_files=$(find $deploy_path -mindepth 2 -maxdepth 2 -type f -name "docker-compose.yml" 2>/dev/null )
+  for compose_file in $compose_files; do
+    job_name=$(consul::get_servicename $compose_file)
+    if [[ -z $job_name ]]; then
+        echo "Compose file '$compose_file' cannot be imported, missing SERVICE_NAME. Skipping to the next"
+        continue
+    fi
+
+    echo "Importing $task_name: $compose_file"
+    if compose::is_valid $compose_file; then
+      local compose_key="${target}/${task_name}/docker-compose"
+      consul::load $compose_file $compose_key || \
+        exit_with_error "Cannot import '$compose_file' to '$compose_key'"
+    fi
+  done
+}
+
+
+# deploy custom volume for an job
+deploy::job::volume()
+{
+  echo docker run --rm -v $PWD:/source -v my_volume:/dest -w /source alpine cp myfile.txt /dest
+}
+
+# backup an already deployed job file (docker-compose.yml)
+deploy::backup()
+{
+  local readonly job_name=${1:?"${FUNCNAME[0]}: missing param #1 <job_name>"}
+  local readonly deploy_path=$(consul::get /deploy/config/path)
+  local job_folder="${deploy_path}/${job_name}"
+  cp -v ${job_folder}/docker-compose.yml ${BACKUP_DIR}/docker-compose-${job_name}.yml.$(date +%F-%T) || \
+    exit_with_error "cannot save backup of $job_name before a new deploy"
+}
+
+# deploy an updated version of the job specified by the consul path
+# @param job  contains the full path of the job in Consul KV store
+deploy::job()
+{
+
+  local readonly job_pathname=${1:?"${FUNCNAME[0]}: error, missing param #1"}
+  local readonly job_name=$(basename $job_pathname)
+  local readonly local_deploy_path=$(consul::get deploy/config/path)
+  local readonly local_job_folder="${local_deploy_path}/${job_name}"
+
+  echo "==> Deploying ${job_pathname}"
+
+  new_file=$(mktemp --dry-run --suffix=.yml -t docker-compose.XXXXXX --tmpdir=$TMP_DIR)
+
+  consul::save "deploy/jobs/${job_pathname}/docker-compose" $new_file || \
+    exit_with_error "Cannot create file $new_file"
+
+  if [[ -f $local_job_folder/docker-compose.yml ]]; then
+    if diff -q $local_job_folder/docker-compose.yml $new_file; then
+      echo -e "no changes in $new_file, nothing will be touched"
+      rm $new_file
+      return 0
+    else
+      echo "job '$job_name' already deployed, saving backup"
+      deploy::backup $job_name
+    fi
+  elif [[ ! -d $local_job_folder ]]; then
+    echo "Creating '$local_job_folder'"
+    mkdir -p $local_job_folder
+  fi
+
+  move_options='--verbose --force --backup=numbered'
+  if ! mv ${move_options} ${new_file} ${local_job_folder}/docker-compose.yml; then
+    exit_with_error "${FUNCNAME[0]}: error moving ${new_file} to ${local_job_folder}/docker-compose.yml, cannot continue"
+  fi
+  cd $local_job_folder && docker-compose up -d
+  echo
+}
+
+
+# TODO: to be fixed!!!!!!!
+deploy::job::remove()
+{
+  local readonly job_pathname=${1:?"${FUNCNAME[0]}: error, missing param #1"}
+  local readonly job_name=$(basename $job_pathname)
+  local readonly local_deploy_path=$(consul::get deploy/config/path)
+  local readonly local_job_folder="${local_deploy_path}/${job_name}"
+
+  echo "==> Undeploying $job_name"
+
+  if [[ -d $local_job_folder ]]; then
+    if [[ -f $local_job_folder/docker-compose.yml ]]; then
+      deploy::backup $job_name
+      cd $local_job_folder && \
+        docker-compose stop --timeout 300
+    fi
+    echo "Removing '$local_job_folder'"
+    rm -rf $local_job_folder ||
+      exit_with_error "Cannot remove local folder '$local_job_folder' for job '$job_name'"
+  else
+      echo "warning: cannot find local folder '$local_job_folder' for job '$job_name', \
+        continuing without changing filesystem, check manually"
+  fi
+
+  echo
+}
+
+
+deploy::get_host_groups()
+{
+  # find if my name match some of the groups
+  # a groupname is a prefix for my name
+  local readonly groups_list=$(consul::list_folder 'deploy/jobs/groups')
+  local mygroups=()
+  for group in $groups_list
+  do
+    group_name=$(basename $group)
+    if [[ $HOSTNAME =~ ^${group_name}-?[a-z0-9]+$ ]]; then
+      mygroups+=( $group_name )
+    fi
+  done
+  echo ${mygroups[@]}
+}
+
+#
+# Deploy all jobs if a node getting all the keys from:
+# - the 'deploy/jobs/everynode' folder
+# - the 'deploy/jobs/nodes/HOSTNAME' folder
+# - all the 'deploy/jobs/groups/NAME' folders that match the
+#   HOSTNAME folder
+#
+deploy::nodejobs()
+{
+  declare -a jobs=() # I'm going to create an array with all the jobs
+
+  jobs+=( $(consul::list_folder "deploy/jobs/everynode") )
+  jobs+=( $(consul::list_folder "deploy/jobs/nodes/${HOSTNAME}") )
+
+  for group in $(deploy::get_host_groups)
+  do
+    declare -a group_jobs=()
+    group_jobs=( $(consul::list_folder "deploy/jobs/groups/$group") )
+    jobs+=( ${group_jobs[@]} )
+  done
+
+  for job_key in "${jobs[@]}"; do
+    deploy::job $job_key
+  done
+}
+
+
+
+# Search a job_name in the jobs already present in Consul KV Store
+# and returns the 'place', something like 'everynode', 'groups/group_name', 'nodes/node_name'
+#
+# TODO: each job can be deployed on a cluster or on a single node, not multiple
+# times on singole nodes, is it right?
+#
+deploy::find()
+{
+  local readonly job_name=${1:?"${FUNCNAME[0]}: missing job_name parameter"}
+
+  if consul::exists deploy/jobs/everynode/$job_name/docker-compose; then
+    echo "everynode"
+  fi
+
+  local nodes_list=$(consul::list_folder deploy/jobs/nodes)
+  for node in $nodes_list
+  do
+    node_name=$(basename $node)
+    if consul::exists deploy/jobs/nodes/$node_name/$job_name/docker-compose; then
+      echo "nodes/$node_name"
+    fi
+  done
+
+  local groups_list=$(consul::list_folder deploy/jobs/groups)
+  for group in $groups_list
+  do
+    group_name=$(basename $group)
+    if consul::exists deploy/jobs/groups/$group_name/$job_name/docker-compose; then
+      echo "groups/$group_name"
+    fi
+  done
+}
+
+# as job_name get the SERVICE_NAME label of the first service where it's available
+# TODO: recognise if line is commented out
+deploy::get_servicename()
+{
+  local readonly compose_file=${1:?"${FUNCNAME[0]}: missin param #1, compose_file"}
+  local readonly job_name=$(egrep -i 'SERVICE(_[0-9]+)?_NAME' $compose_file \
+  | head -1 \
+  | cut -d':' -f2 \
+  | tr -d -c '[:alnum:]-')
+
+  if [[ ! $job_name =~ ^[a-z](-?[a-z0-9]+)+$ ]]; then
+    return 1
+  fi
+  echo $job_name
+}
+
+# create a new task to deploy from the local directory
+# the local dir MUST contains a docker-compose.yml file
+# TODO: specify yml file with an option
+#
+# deploy happens in 2 steps:
+# 1) compose file is added to consul
+# 2) e deploy-event is fired
+deploy::create()
+{
+  local readonly target=${1:?"${FUNCNAME[0]}: missing target parameter"}
+  local readonly compose_file=${2:-'./docker-compose.yml'}
+
+  [ ! -f $compose_file ] && \
+    exit_with_error "cannot find $compose_file, try starting a deploy from the same path where is located the docker-compose.yml"
+
+  job_name=$(deploy::get_servicename $compose_file) || \
+      exit_with_error "${FUNCNAME[0]}: job_name specified '$job_name' is absent or not valid, please be sure to have a SERVICE_NAME label in docker-compose.yml (or SERVICE_<PORT>_NAME if exposing multiple ports"
+
+  # check if deploy already exists
+  local readonly job_folder=$(deploy::find $job_name)
+  if [[ ! -z $job_folder ]]; then
+    exit_with_error "cannot create a job if a job with the same name is already deployed in folder '$job_folder'"
+    return 1
+  fi
+
+  # check if target is valid
+  # TODO: find a goodway to write a check is_valid_target
+  #       that returns a path and not only a boolean 0, 1
+  if $(consul::folder_exists "deploy/jobs/nodes/$target"); then
+    # deploying to a valid hostname or 'everyone'
+    local readonly compose_key="deploy/jobs/nodes/$target/$job_name/docker-compose"
+  elif $(consul::folder_exists "deploy/jobs/groups/$target"); then
+    # deploying to an existing group
+    local readonly compose_key="deploy/jobs/groups/$target/$job_name/docker-compose"
+  else
+    exit_with_error "Cannot deploy to '$target', check if the required target exists under Consul KV Store deploy/jobs/"
+  fi
+
+  compose::is_valid $compose_file || \
+    exit_with_error "Cannot create deployment, '$compose_file' is not valid!"
+
+  consul::load $compose_file $compose_key || \
+    exit_with_error "Cannot import '$compose_file' to '$compose_key'"
+  echo "Imported $job_name: $compose_file"
+
+  # TODO: remove -node if everynode
+  local readonly event_id=$(consul event -name $deploy_event -node "$target" "$job_name" | cut -d':' -f2)
+  if [[ $? -gt 0 ]]; then
+    echo "${FUNCNAME[0]}: error sending a deploy event for $target/$job_name"
+    return 1
+  fi
+
+  echo "Sent deploy event '$event_id' for $target/$job_name"
+  return 0
+}
+
+# remove a job deployed
+# the local dir MUST contains a docker-compose.yml file
+# TODO: specify yml file with an option
+#
+# deploy happens in 2 steps:
+# 1) compose file is removed from
+# 2) an undeploy-event is fired
+deploy::destroy()
+{
+  local readonly target=${1:?"${FUNCNAME[0]}: missing target parameter"}
+  local readonly compose_file=${2:-'./docker-compose.yml'}
+  [ ! -f $compose_file ] && \
+    exit_with_error "cannot find $compose_file, try starting a deploy from the same path where is located the docker-compose.yml"
+
+  local readonly job_name=$(deploy::get_servicename $compose_file) || \
+    exit_with_error "${FUNCNAME[0]}: job_name specified '$job_name' is absent or not valid, please be sure to have a SERVICE_NAME label in docker-compose.yml (or SERVICE_<PORT>_NAME if exposing multiple ports"
+
+  # check if deploy already exists
+  local readonly job_folder=$(deploy::find $job_name)
+  if [[ -z $job_folder ]]; then
+    exit_with_error "cannot find any job '$job_name' to update"
+    return 1
+  fi
+
+  if [[ $target != $(basename $job_folder) ]]; then
+    exit_with_error "cannot find '$job_name' to update on target '$target'"
+    return 1
+  fi
+
+  # target is valid
+  compose_key="deploy/jobs/$job_folder"
+
+  consul::remove_folder $compose_key || \
+    exit_with_error "Cannot import '$compose_file' to '$compose_key'"
+  echo "Removed $job_name from Consul"
+
+  # TODO: remove -node if everynode
+  local readonly event_id=$(consul event -name $undeploy_event -node "$target" "$job_name" | cut -d':' -f2)
+  if [[ $? -gt 0 ]]; then
+    echo "${FUNCNAME[0]}: error sending an undeploy event for $target/$job_name"
+    return 1
+  fi
+
+  echo "Sent undeploy event '$event_id' for $target/$job_name"
+  return 0
+}
+
+
+
+
+deploy::update()
+{
+  local readonly target=${1:?"${FUNCNAME[0]}: missing target parameter"}
+  local readonly compose_file=${2:-'./docker-compose.yml'}
+  [ ! -f $compose_file ] && \
+    exit_with_error "cannot find $compose_file, try starting a deploy from the same path where is located the docker-compose.yml"
+
+  local readonly job_name=$(deploy::get_servicename $compose_file) || \
+    exit_with_error "${FUNCNAME[0]}: job_name specified '$job_name' is absent or not valid, please be sure to have a SERVICE_NAME label in docker-compose.yml (or SERVICE_<PORT>_NAME if exposing multiple ports"
+
+  # check if deploy already exists
+  local readonly job_folder=$(deploy::find $job_name)
+  if [[ -z $job_folder ]]; then
+    exit_with_error "cannot find any job '$job_name' to update"
+    return 1
+  fi
+
+  if [[ $target != $(basename $job_folder) ]]; then
+    exit_with_error "cannot find '$job_name' to update on target '$target'"
+    return 1
+  fi
+
+  # target is valid
+  compose_key="deploy/jobs/$job_folder/$job_name/docker-compose"
+
+  compose::is_valid $compose_file || \
+    exit_with_error "Cannot update deployment, '$compose_file' is not valid!"
+
+  consul::load $compose_file $compose_key || \
+    exit_with_error "Cannot import '$compose_file' to '$compose_key'"
+  echo "Imported new $job_name from $compose_file"
+
+  # TODO: remove -node if everynode
+  local readonly event_id=$(consul event -name $deploy_event -node "$target" "$job_name" | cut -d':' -f2)
+  if [[ $? -gt 0 ]]; then
+    echo "${FUNCNAME[0]}: error sending a deploy event for $target/$job_name"
+    return 1
+  fi
+
+  echo "Sent deploy event '$event_id' for $target/$job_name"
+  return 0
+}
+
+# getter&setter to hide the path used in Consul KV
+# without parameter get the current value
+# with a parameter set the value to the parameter value
+deploy::ltime()
+{
+  value=${1:-""}
+  if [[ -z $value ]]; then
+    #echo "get deploy/status/$HOSTNAME/ltime"
+    echo $(consul::get deploy/status/$HOSTNAME/ltime)
+  else
+    #echo "set deploy/status/$HOSTNAME/ltime=$value"
+    echo $(consul::set deploy/status/$HOSTNAME/ltime $value)
+  fi
+}
+
+# Validate a deploy, checking:
+# 1) the first parameter is a valid path (everywhere|a node name | one of the group of the node)
+# 2) the second paramter is a ltime >= last ltime managed on that node
+deploy::validate()
+{
+  local job_path=${1:?"${FUNCNAME[0]}: error, missing parameter job_path"}
+  local ltime=${2:?"${FUNCNAME[0]}: error, missing parameter ltime"}
+  local last_ltime=$(deploy::ltime)
+  if [[ $ltime -le $last_ltime ]]; then
+    echo "${FUNCNAME[0]}: old deploy event"
+    return 1
+  fi
+  local compose_key="deploy/jobs/${job_path}/${job_name}/docker-compose"
+  if ! $(consul::exists $compose_key); then
+    echo "${FUNCNAME[0]}: $job_name cannot be deployed, missing key '$compose_key'"
+    return 1
+  fi
+  return 0
+}
+
+# the function get a new deploy object from stdin
+# and perform a deploy, if and only if the deploy
+# is not already performed
+# Note: here is managed the Ltime value
+deploy::handler()
+{
+  local id ltime nodefilter payload job_name job_path
+  echo "[$$]"
+  #https://starkandwayne.com/blog/bash-for-loop-over-json-array-using-jq/
+  while read line
+  do
+    #echo "$line"
+    for row in $(echo "${line}" | jq -c '.[]'); do
+      id=$(echo "$row" | jq -r .ID)
+      ltime=$(echo "$row" | jq -r .LTime)
+      nodefilter=$(echo "$row" | jq -r .NodeFilter)
+      if [[ -z $ltime ]] || [[ -z $id ]]; then
+        echo "Error: malformed event id='${id}' ltime='${ltime}'"
+        continue
+      fi
+      # we store only the job_name in the payload, the target has to be found
+      job_name=$(echo "$row" | jq -r .Payload | base64 --decode)
+      job_path=$(deploy::find $job_name)
+      #echo "deploy::find '$job_name' returned '$job_path'"
+      if [[ -z $job_path ]]; then
+        echo "Skipping deploy event ${id}: job '${job_name}' not present in KV store"
+        continue
+      fi
+
+      if deploy::validate "$job_path" "$ltime"; then
+        echo "Managing deploy event ${id}: ${job_path}/${job_name}"
+        deploy::job ${job_path}/${job_name}
+        deploy::ltime $ltime
+      else
+        echo "Skipping deploy event ${id}: path '${job_path}' is invalid or event is old (ltime=${ltime})"
+      fi
+    done
+  done < "${1:-/dev/stdin}"
+}
+
+undeploy::handler()
+{
+  local id ltime nodefilter payload job_name job_path
+  while read line
+  do
+    for row in $(echo "${line}" | jq -c '.[]'); do
+      id=$(echo "$row" | jq -r .ID)
+      ltime=$(echo "$row" | jq -r .LTime)
+      nodefilter=$(echo "$row" | jq -r .NodeFilter)
+      if [[ -z $ltime ]] || [[ -z $id ]]; then
+        echo "Error: malformed event id='${id}' ltime='${ltime}'"
+        continue
+      fi
+      # we store only the job_name in the payload, the target has to be found
+      job_name=$(echo "$row" | jq -r .Payload | base64 --decode)
+      job_path=$(deploy::find $job_name)
+      if [[ -z $job_path ]]; then
+        echo "Skipping deploy event ${id}: job '${job_name}' not present in KV store"
+        continue
+      fi
+
+      if deploy::validate "$job_path" "$ltime"; then
+        echo "Managing undeploy event ${id}: ${job_path}/${job_name}"
+        deploy::job::remove ${job_path}/${job_name}
+        deploy::ltime $ltime
+      else
+        echo "Skipping deploy event ${id}: path '${job_path}' is invalid or event is old (ltime=${ltime})"
+      fi
+    done
+  done < "${1:-/dev/stdin}"
+}
+
+
+show_syntax()
+{
+  echo
+  echo "Syntax:"
+  echo
+  echo "$0 <command> [options]"
+  echo
+  echo "Available commands:"
+  echo "  - init-node           deploy all the jobs available for the current node"
+  echo "  - server              wait for job events from consul"
+  echo "  - create <target>     create a new job from a docker-compose.yml file in the current directory"
+  echo "  - update <target>     update an existing job from a docker-compose.yml file in the current directory"
+  echo "                        target can be 'everyone', a HOSTNAME or a cluster prefix"
+  echo "  - destroy <target>    completely remove a job from the target"
+  echo "  - import  <target>    import currently deployed jobs in Consul"
+  echo "  - help  show this syntax"
+  echo
+}
+
+main()
+{
+    if [[ $# -lt 1 ]]; then
+       show_syntax
+       exit 0
+    fi
+
+    local readonly cmd=$1; shift
+
+    case $cmd in
+      init-node)
+        deploy::nodejobs
+        ;;
+      create)
+        local target=${1:?"Missing parameter 'target', type $0 help for details"}
+        shift
+        deploy::create $target
+        ;;
+      update)
+        local target=${1:?"Missing parameter 'target', type $0 help for details"}
+        shift
+        deploy::update $target
+        ;;
+      destroy)
+        local target=${1:?"Missing parameter 'target', type $0 help for details"}
+        shift
+        deploy::destroy $target
+        ;;
+      deploy-handler)
+        deploy::handler
+        ;;
+      server)
+        if consul::isup; then
+          echo -e "\nWaiting for new events from Consul...\n"
+          # on each deploy event, the script call itself with the deploy-handler parameter
+          consul watch -type=event -name=deploy-job consul lock 'deploy/lock' $0 deploy-handler
+        else
+          exit_with_error "Server mode is available only on a server with consul deployed"
+        fi
+        shift
+        ;;
+      import)
+        local target=${1:?"Missing parameter 'target', type $0 help for details"}
+        deploy::import_group ${target}
+        ;;
+      help)
+        show_syntax
+        ;;
+      test)
+        group=$1
+        shift
+        consul::folder_exists "deploy/jobs/groups/$group"
+        ;;
+      *)
+        echo "Invalid command specified, get the help with '$0 help'"
+        exit 0
+        ;;
+    esac
+
+    #if _self::is_function $cmd ; then
+    #    echo "Running $cmd"
+    #    $$cmd
+    #fi
+}
+
+init
+
+main $@

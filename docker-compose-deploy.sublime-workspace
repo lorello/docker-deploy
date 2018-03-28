@@ -1,0 +1,734 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"compose_",
+				"compose_file"
+			],
+			[
+				"get",
+				"get_service"
+			],
+			[
+				"is",
+				"is_valid"
+			],
+			[
+				"floo",
+				"floorplan_drop_command"
+			],
+			[
+				"floor",
+				"floorplan-drop"
+			],
+			[
+				"task",
+				"task_id"
+			],
+			[
+				"venue_",
+				"venue_name"
+			],
+			[
+				"s3_",
+				"s3_bucket"
+			],
+			[
+				"source",
+				"source_mongo_collection"
+			],
+			[
+				"sour",
+				"source_mongo_db"
+			],
+			[
+				"source_",
+				"source_mongo_host"
+			],
+			[
+				"models",
+				"models_parameters"
+			],
+			[
+				"vee",
+				"venue_name"
+			],
+			[
+				"send",
+				"send_metric"
+			],
+			[
+				"un",
+				"unknown"
+			],
+			[
+				"shf",
+				"shift_seconds"
+			],
+			[
+				"begin",
+				"begin_epoch"
+			],
+			[
+				"shi",
+				"SHIFT"
+			],
+			[
+				"time",
+				"timeExpressionToSeconds"
+			],
+			[
+				"ret",
+				"return"
+			],
+			[
+				"redis",
+				"redisHost"
+			],
+			[
+				"REDIS_",
+				"REDIS_HOST"
+			],
+			[
+				"res",
+				"response"
+			],
+			[
+				"json",
+				"json_encode"
+			],
+			[
+				"MYSQL",
+				"MYSQL_APPS_USER"
+			],
+			[
+				"mysqlApps",
+				"mysqlAppsMaster"
+			],
+			[
+				"mongodb",
+				"mongodb_host"
+			],
+			[
+				"mongo",
+				"mongodb_name"
+			],
+			[
+				"int-my",
+				"int-mysql-slave"
+			],
+			[
+				"reg",
+				"registrations_wifiarea"
+			],
+			[
+				"regi",
+				"registrations"
+			],
+			[
+				"visi",
+				"visits_desktop"
+			],
+			[
+				"visit",
+				"visits_mobile"
+			],
+			[
+				"container",
+				"container_name"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "deploy",
+			"settings":
+			{
+				"buffer_size": 22609,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "lib.consul.sh",
+			"settings":
+			{
+				"buffer_size": 2136,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "# Docker Compose Deploy\n\nA simple tool to deploy on multiple hosts using docker-compose \nand Consul\n\n## Requirements\n\n* [docker-compose](https://docs.docker.com/compose)\n* [consul](https://consul.io)\n\n## When to use\n\nYou have Consul deployed on all your hosts and you are already using\nit to perform service discovery and/or central configuration of your\napplications. You don't need advanced features of a real cluster\norchestrator like [Nomad](https://nomadproject.io), [Kubernetes](kubernetes.io)\nor [Swarm](https://docs.docker.com/engine/swarm/), but you need\nthat the docker-compose configuration get deployed on all nodes\nof a cluster, eventually being an autoscaling group.\n\n## How to use\n\n1) Prepare the docker-compose.yml that you want to deploy on the cluster\nof nodes.\n2) Point to the Consul of the cluster:\n\n    export CONSUL_HTTTP_ADDR=http://foo:8500",
+			"file": "README.md",
+			"file_size": 506,
+			"file_write_time": 131661883252195225,
+			"settings":
+			{
+				"buffer_size": 864,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 392.0,
+		"last_filter": "m",
+		"selected_items":
+		[
+			[
+				"m",
+				"Markdown Preview: Preview in Browser"
+			],
+			[
+				"markd",
+				"Markdown Preview: Preview in Browser"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 485.0
+	},
+	"console":
+	{
+		"height": 0.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/Users/lorello/src/docker-compose-deploy"
+	],
+	"file_history":
+	[
+		"/Users/lorello/src/docker-compose-deploy/lib.consul.sh",
+		"/Users/lorello/src/cloud4wi/cloud-inits/ship.yml",
+		"/Users/lorello/src/cloud4wi/marvin.sh",
+		"/Users/lorello/Desktop/oom-killer-presence-collector.txt",
+		"/Users/lorello/src/cloud4wi/airflow-dags/volare-stats.py",
+		"/Users/lorello/src/cloud4wi/airflow-dags/location-to-s3.py",
+		"/Users/lorello/src/cloud4wi/airflow-dags/pradence-predictions.py",
+		"/Users/lorello/src/cloud4wi/airflow-dags/prediction_workflow_time_aware_aggregation_emea.py",
+		"/Users/lorello/src/cloud4wi/volare-api/app/Config/envConfig_prod7.1.php",
+		"/Users/lorello/src/cloud4wi/volare-api/app/Config/envConfig.tpl",
+		"/Users/lorello/src/cloud4wi/volare-api/app/Config/core.php",
+		"/Users/lorello/src/cloud4wi/airflow-dags/evaluation_workflow_time_aware_50.py",
+		"/Users/lorello/src/cloud4wi/airflow-dags/presence-raw-data-management.py",
+		"/Users/lorello/src/cloud4wi/cloud-inits/bigdata02.yml",
+		"/Users/lorello/src/cloud4wi/cloud-inits/presence-collector.yml",
+		"/Users/lorello/src/cloud4wi/scripts/puppet/consul.pp",
+		"/Users/lorello/src/cloud4wi/airflow-dags/airflow-selfcheck.py",
+		"/Users/lorello/src/cloud4wi/airflow-dags/presence_process/src/model_query_selection_median_agg_rate.py",
+		"/Users/lorello/src/cloud4wi/span/docker-entrypoint.sh",
+		"/Users/lorello/src/cloud4wi/span/Dockerfile",
+		"/Users/lorello/src/cloud4wi/airflow-dags/guestwifi-raw-data-archive.py",
+		"/Users/lorello/src/cloud4wi/airflow-dags/prediction_workflow_time_aware_aggregation_50.py",
+		"/Users/lorello/src/cloud4wi/airflow-dags/evaluation_workflow_time_aware_emea.py",
+		"/Users/lorello/src/cloud4wi/airflow-dags/presence_process/src/prediction_time_aware.py",
+		"/Users/lorello/src/cloud4wi/airflow-dags/presence_process/src/test.py",
+		"/Users/lorello/src/cloud4wi/airflow-dags/prediction_workflow_time_aware_aggregation.py",
+		"/Users/lorello/Downloads/evaluation_workflow_time_aware_nala.py",
+		"/Users/lorello/Desktop/cloud4wi-superteam.txt",
+		"/Users/lorello/src/lorello.github.io/pod-hellodocs.yml",
+		"/Users/lorello/src/lorello.github.io/docs/mongo prada",
+		"/Users/lorello/Downloads/variables.json",
+		"/Users/lorello/src/cloud4wi/scripts/bin/airflow-worker-setup",
+		"/Users/lorello/src/lorello.github.io/docs/kubernates.md",
+		"/Users/lorello/src/cloud4wi/scripts/puppet/mongodb-replicaset.pp",
+		"/Users/lorello/src/cloud4wi/scripts/puppet/scripts.pp",
+		"/Users/lorello/src/cloud4wi/scripts/bin/check-result-to-graphite",
+		"/Users/lorello/src/cloud4wi/scripts/consul.d/host-checks.json",
+		"/Users/lorello/src/cloud4wi/docker-php-5.3/Dockerfile",
+		"/Users/lorello/src/docker-mydumper/mydumper.sh",
+		"/Users/lorello/src/lorello.github.io/docs/nginx.md",
+		"/Users/lorello/Desktop/enforta db migration",
+		"/Users/lorello/Downloads/stianto-di-mongo.txt",
+		"/Users/lorello/Desktop/appunti airflow ML",
+		"/Users/lorello/Desktop/serena",
+		"/Users/lorello/src/cloud4wi/scripts/bin/mongodb-backup",
+		"/Users/lorello/src/cloud4wi/scripts/bin/mongodb-dump2",
+		"/Users/lorello/src/cloud4wi/scripts/bin/mongodb-archive",
+		"/Users/lorello/src/cloud4wi/cloud-init.yaml",
+		"/Users/lorello/src/cloud4wi/volare-silex-api/web/bootstrap.php",
+		"/Users/lorello/src/cloud4wi/volare-silex-api/src/Volare/Models/User.php",
+		"/Users/lorello/src/cloud4wi/volare-silex-api/web/index.php",
+		"/Users/lorello/src/cloud4wi/volare-silex-api/web/connection.php",
+		"/Users/lorello/src/cloud4wi/volare-silex-api/docker-compose.yml",
+		"/Users/lorello/src/cloud4wi/volare-silex-api/sql/init.sql",
+		"/Users/lorello/src/cloud4wi/volare-backing-services/Dockerfile",
+		"/Users/lorello/src/cloud4wi/volare-backing-services/docker-compose.yml",
+		"/Users/lorello/Downloads/volare-silex-api/docker-compose.yml",
+		"/Users/lorello/src/archiviomemorie/grav-admin/system/config/site.yaml",
+		"/Users/lorello/src/archiviomemorie/grav-admin/user/themes/antimatter/blueprints.yaml",
+		"/Users/lorello/src/archiviomemorie/grav-admin/user/themes/antimatter/antimatter.yaml",
+		"/Users/lorello/src/archiviomemorie/grav-admin/user/themes/antimatter/antimatter.php",
+		"/Users/lorello/src/archiviomemorie/grav-admin/user/pages/02.prova/default.md",
+		"/Users/lorello/Documents/cloud4wi_vfs.sql",
+		"/Users/lorello/Documents/Activities/2017-09 Aldi Upgrade/sqldiff/cloud4wi_vfs.sql",
+		"/Users/lorello/Downloads/Aldi-SQL-diff/cloud4wi_apps.sql",
+		"/Users/lorello/Downloads/Aldi-SQL-diff/app_mailchimpconnect.sql",
+		"/Users/lorello/Downloads/Aldi-SQL-diff/app_aerohiveconnect.sql",
+		"/Users/lorello/src/cloud4wi/cloud4wi-bigdata/cloud4wi-presence/cloud4wi-presence-userenrichment-web/README.md",
+		"/Users/lorello/src/cloud4wi/cloud4wi-bigdata/cloud4wi-analytics/Dockerfile.base",
+		"/Users/lorello/src/cloud4wi/cloud4wi-bigdata/cloud4wi-presence/cloud4wi-presence-userenrichment-web/build.sh",
+		"/Users/lorello/src/cloud4wi/cloud4wi-bigdata/cloud4wi-presence/Dockerfile.base",
+		"/Users/lorello/src/cloud4wi/cloud4wi-bigdata/cloud4wi-presence/cloud4wi-presence-userenrichment-web/Dockerfile.build",
+		"/Users/lorello/src/cloud4wi/cloud4wi-bigdata/cloud4wi-analytics/Dockerfile.build",
+		"/Users/lorello/src/cloud4wi/volare-backing-services/mysql/my.cnf",
+		"/Users/lorello/src/cloud4wi/volare-backing-services/mysql/updates/2016_10_01_LHS_application_remote_functions.sql",
+		"/Users/lorello/src/cloud4wi/volare-backing-services/mysql/dbinit.sh",
+		"/Users/lorello/src/cloud4wi/volare-sp/run",
+		"/Users/lorello/src/cloud4wi/volare-sp/app/Config/envConfig.php",
+		"/Users/lorello/src/cloud4wi/volare-sp/app/Config/envConfig.tpl",
+		"/Users/lorello/src/cloud4wi/volare-sp/Dockerfile.dev",
+		"/Users/lorello/src/cloud4wi/volare-backing-services/LHS_application_remote.functions.sql",
+		"/Users/lorello/src/impreseallasbarra.org/mariadb-init/impreseh_wp.sql",
+		"/Users/lorello/src/impreseallasbarra.org/mariadb-init/impreseh_wp_local.sql",
+		"/Users/lorello/src/cloud4wi/volare-sp/app/Controller/HomeController.php",
+		"/Users/lorello/src/cloud4wi/volare-sp/app/Controller/AppController.php",
+		"/Users/lorello/src/cloud4wi/volare-sp/app/Config/core.php",
+		"/Users/lorello/src/cloud4wi/volare-sp/docker-compose.yml",
+		"/Users/lorello/src/cloud4wi/volare-sp/app/Controller/UsersController.php",
+		"/Users/lorello/src/cloud4wi/volare-sp/app/Config/database.php",
+		"/Users/lorello/src/cloud4wi/volare-sp/app/Vendor/lhs/cloud4wiDB.class.php",
+		"/Users/lorello/src/cloud4wi/volare-sp/app/Vendor/lhs/db.class.php",
+		"/Users/lorello/src/cloud4wi/volare-sp/app/Lib/lwrop.php",
+		"/Users/lorello/src/cloud4wi/volare-sp/app/Vendor/lhs/dbAPI.class.php",
+		"/Users/lorello/src/cloud4wi/volare-sp/app/Vendor/lhs/remoteApp.class.php",
+		"/Users/lorello/src/cloud4wi/volare-sp/app/Vendor/lhs/request_service.class.php",
+		"/Users/lorello/src/cloud4wi/volare-mysql/updates/2016_12_02_1229_jthottungalthara.sql",
+		"/Users/lorello/src/cloud4wi/volare-cp/app/Config/database.php",
+		"/Users/lorello/src/cloud4wi/volare-mysql/updates/2016_11_02_lic_controlpanel_lang_data_newcp.sql",
+		"/Users/lorello/src/cloud4wi/volare-mysql/updates/2017_03_06_1454_fmanna.sql",
+		"/Users/lorello/src/cloud4wi/volare-mysql/updates/2017_05_04_1726_gradano.sql",
+		"/Users/lorello/src/cloud4wi/volare-mysql/updates/2017_07_16_1726_jthottungalthara.sql",
+		"/Users/lorello/src/cloud4wi/volare-mysql/updates/2017_07_17_1655_gradano.sql",
+		"/Users/lorello/src/cloud4wi/volare-mysql/updates/2016_11_03_lic_controlpanel_lang_data_newcp.sql",
+		"/Users/lorello/src/cloud4wi/volare-mysql/updates/2016_11_04_lic_controlpanel_lang_tag_newcp.sql",
+		"/Users/lorello/src/cloud4wi/volare-cp/app/Config/bootstrap.php",
+		"/Users/lorello/src/cloud4wi/volare-cp/lib/Cake/basics.php",
+		"/Users/lorello/src/cloud4wi/volare-cp/Dockerfile.dev",
+		"/Users/lorello/src/cloud4wi/volare-cp/docker-compose.yml",
+		"/Users/lorello/src/cloud4wi/volare-cp/app/Config/core.php",
+		"/Users/lorello/src/cloud4wi/volare-cp/app/Controller/Component/WropAuthComponent.php",
+		"/Users/lorello/src/cloud4wi/volare-cp/lib/Cake/Network/Http/HttpSocket.php",
+		"/Users/lorello/src/cloud4wi/volare-cp/app/webroot/phpinfo.php",
+		"/Users/lorello/src/cloud4wi/volare-cp/app/webroot/index.php",
+		"/Users/lorello/src/cloud4wi/volare-cp/deploy/config.dev-core",
+		"/Users/lorello/src/cloud4wi/volare/splashPortal/default/Dockerfile",
+		"/Users/lorello/src/cloud4wi/volare-cp/README.md",
+		"/Users/lorello/src/cloud4wi/volare-cp/app/Lib/lwrop.php",
+		"/Users/lorello/src/cloud4wi/volare-cp/app/Vendor/webapps/webapps.php",
+		"/Users/lorello/src/cloud4wi/volare-cp/app/Vendor/lhs/request_service.class.php",
+		"/Users/lorello/src/cloud4wi/volare-cp/app/Vendor/lhs/sendAlsoAPI.class.php",
+		"/Users/lorello/src/cloud4wi/volare-cp/Dockerfile",
+		"/Users/lorello/src/cloud4wi/volare-cp/app/Controller/Component/WebappsComponent.php",
+		"/Users/lorello/src/cloud4wi/volare-legacytree/clonewars.sh",
+		"/Users/lorello/src/cloud4wi/volare-cp/app/Config/envConfig.tpl",
+		"/Users/lorello/src/cloud4wi/volare-cp/envConfig.tpl",
+		"/Users/lorello/src/cloud4wi/volare/controlPanel/default/app/Config/core.php",
+		"/Users/lorello/src/cloud4wi/volare/controlPanel/default/app/Config/database.php",
+		"/Users/lorello/src/cloud4wi/volare/splashPortal/fogportal/setup/apache_default"
+	],
+	"find":
+	{
+		"height": 35.0
+	},
+	"find_in_files":
+	{
+		"height": 93.0,
+		"where_history":
+		[
+			"/Users/lorello/src/cloud4wi/volare-sp",
+			"*.php"
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": true,
+		"find_history":
+		[
+			"egrep -i 'SERVICE(",
+			"deploy::find",
+			"is_val",
+			"docker-compose config",
+			"ERROR: Cannot deploy",
+			"ERROR: Cannot deploy to",
+			"docker-compose.yml",
+			"consul::import_file",
+			"load",
+			"MYIP",
+			"deploy::wait",
+			"C4W_ENV_SPLASHPORTAL_URL",
+			"prefix",
+			"REDIS_HOST",
+			"s3_secret_key",
+			"docker",
+			"compose",
+			"tmp",
+			"httpie",
+			"/var/lib/consul",
+			"consul.sevice",
+			"consul",
+			",",
+			"'",
+			"\t",
+			"Bash",
+			"1003",
+			"mongo_uri",
+			"prada",
+			"source_mongo_collection",
+			"mongo_collection",
+			"evaluation_total",
+			"store_results_mongo",
+			"models_collection.",
+			"FOUND A MO",
+			"model_selection_mongo",
+			"255",
+			"models_collection",
+			"complete",
+			"mongo_host",
+			"mongo_port",
+			"general",
+			"datetime",
+			"bologna",
+			"module",
+			"time_zone",
+			"timezone",
+			"time_zone",
+			"•   \n",
+			"kops-state",
+			"s3",
+			"cloud4wi",
+			"check-res",
+			"check-",
+			"systemd",
+			"restart",
+			"consul_sys",
+			"consul.ser",
+			"default",
+			"packa",
+			"consul.d/host-checks.json",
+			"restart",
+			"hosts",
+			"app_1      |",
+			"memory_limit",
+			"TIMEZONE",
+			"curl",
+			"aws_dn",
+			"http_limit",
+			"tmpdir",
+			"getArc",
+			"getArchiveFilename",
+			"DATA_RETENTION",
+			"No do",
+			"no docu",
+			"EXPORT_LINES",
+			"EXPORTED_DOCS",
+			"ARCHIVE",
+			"ONLINE_DOCS",
+			"LOWER_LIMIT",
+			"UPPER_LIMIT",
+			"EXPIRING_DAY",
+			"EXP_BEGIN_PERIOD",
+			"EXP_BEGIN",
+			"INTERVAL",
+			"SKIP_DROP",
+			"\"",
+			"trigger",
+			"mysql",
+			"https://www.impreseallasbarra.org",
+			"localhost",
+			"docker",
+			"Here",
+			"Ciao",
+			"ciao",
+			"Ciao",
+			"debug",
+			"REDIS",
+			"C4W_ENV_SP_REDIS",
+			"C4W_ENV_SP_WROP",
+			"DEBUG",
+			"dbcoreapps",
+			"dbcore",
+			"int-mysql",
+			"\"",
+			"int-mysql",
+			"int-mysql-master",
+			"dbcore",
+			"envConfig.php",
+			"redis",
+			"C4W_ENV_SP_REDIS",
+			"Redis",
+			"redis",
+			"open",
+			"__",
+			"__(",
+			"REDIS_HOST",
+			"REDIS_H",
+			"error_log",
+			"Cache::config",
+			"Cache::con",
+			"Cake::cache",
+			"Cache::config",
+			"CACHE",
+			"error_log",
+			"function requ",
+			"request",
+			"WROP"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"  ",
+			"",
+			"exported_lines",
+			"exported_docs",
+			"dump_filename",
+			"online_docs",
+			"lower_limit",
+			"upper_limit",
+			"BEGIN_DATE",
+			"'",
+			"http://wp.docker.localhost:8000/",
+			"'",
+			"MONGODB_PORT",
+			"MONGODB_HOST",
+			"MONGODB_NAME",
+			"MYSQL_APPS_PASSWORD",
+			"MYSQL_APPS_LOGIN",
+			"MYSQL_APPS_SLAVE",
+			"MYSQL_APPS_MASTER",
+			"MYSQL_CORE_PASSWORD",
+			"MYSQL_CORE_LOGIN",
+			"MYSQL_CORE_SLAVE",
+			"MYSQL_CORE_MASTER",
+			"'",
+			"{{serverName}}",
+			", NEW.",
+			", ",
+			"pins",
+			", NEW.",
+			"hotspot_statistics",
+			", NEW.",
+			", ",
+			"",
+			", NEW.",
+			"",
+			"CUSTOMER",
+			"CREDIT",
+			"ACCOUNT_BONUS_TEMPLATES",
+			", NEW.",
+			"`ID`",
+			"`wrop`.`ACCOUNTS_tmp`",
+			"`wrop`.`ACCOUNTS`"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "deploy",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 22609,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/ShellScript/Shell-Unix-Generic.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 4402.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "lib.consul.sh",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2136,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/ShellScript/Shell-Unix-Generic.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "README.md",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 864,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								824,
+								864
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Markdown/Markdown.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 23.0
+	},
+	"input":
+	{
+		"height": 31.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "",
+	"project": "docker-compose-deploy.sublime-project",
+	"replace":
+	{
+		"height": 42.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 278.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

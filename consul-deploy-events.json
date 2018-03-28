@@ -1,0 +1,10 @@
+{
+  "type": "event",
+  "name": "job-deploy",
+  "args": ["/usr/bin/deploy", "deploy-handler" ]
+},
+{
+  "type": "event",
+  "name": "job-deploy",
+  "args": ["/usr/bin/deploy", "undeploy-handler" ]
+}

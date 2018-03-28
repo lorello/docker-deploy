@@ -1,0 +1,12 @@
+version: "2.3"
+
+services:
+  echo:
+    image: hashicorp/http-echo
+    command: -text="hello world v3"
+    ports: [ 5678 ]
+    labels:
+      SERVICE_NAME: http-echo2
+      SERVICE_CHECK_HTTP: /
+      SERVICE_TAGS: urlprefix-public-eu-lb.cloud4wi.com/echo
+

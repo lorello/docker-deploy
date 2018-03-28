@@ -1,0 +1,10 @@
+version: "2.3"
+
+services:
+  web:
+    image: nginx
+    ports: 
+      - 80
+    labels:
+      SERVICE_NAME: 'nginx'
+
