@@ -9,6 +9,7 @@ INCLUDE_PATH=${DEPLOY_LIBS:-"/usr/local/lib/bash/"}
 
 TMP_DIR=${DEPLOY_TMP:-'/tmp/deploy'}
 BACKUP_DIR=${DEPLOY_BACKUP:-'/var/backups/deploy'}
+CONSUL_SERVER=${CONSUL_HTTP_ADDR:-localhost}
 
 # event name used in consul to comunicate a new deploy
 readonly deploy_event='deploy-job'
@@ -40,27 +41,9 @@ init()
 {
 
   if ! consul::isup; then
-    exit_with_error "Cannot connect to Consul server ${CONSUL_HTTP_ADDR:-localhost}"
+    exit_with_error "Cannot connect to Consul server ${CONSUL_SERVER}"
   else
-    echo "Using Consul @ ${CONSUL_HTTP_ADDR:-localhost}"
-  fi
-
-  if [[ ! -d ${TMP_DIR} ]]; then
-    if ! mkdir -p ${TMP_DIR} >/dev/null 2>&1; then
-      exit_with_error "Cannot create tmp dir '${TMP_DIR}'"
-      return 1
-    else
-      echo "created temporary folder '$TMP_DIR'"
-    fi
-  fi
-
-  if [[ ! -d $BACKUP_DIR ]]; then
-    if ! mkdir -p $BACKUP_DIR >/dev/null 2>&1; then
-      exit_with_error "Cannot create backup dir '$BACKUP_DIR'"
-      return 1
-    else
-      echo "created backup directory '$BACKUP_DIR'"
-    fi
+    echo "Using Consul @${CONSUL_SERVER}"
   fi
 
   local deploy_path=$(consul::get deploy/config/path)
@@ -579,6 +562,38 @@ undeploy::handler()
   done < "${1:-/dev/stdin}"
 }
 
+deploy::server()
+{
+
+  if [[ ! -d ${TMP_DIR} ]]; then
+    if ! mkdir -p ${TMP_DIR} >/dev/null 2>&1; then
+      exit_with_error "Cannot create tmp dir '${TMP_DIR}'"
+      return 1
+    else
+      echo "created temporary folder '$TMP_DIR'"
+    fi
+  fi
+
+  if [[ ! -d $BACKUP_DIR ]]; then
+    if ! mkdir -p $BACKUP_DIR >/dev/null 2>&1; then
+      exit_with_error "Cannot create backup dir '$BACKUP_DIR'"
+      return 1
+    else
+      echo "created backup directory '$BACKUP_DIR'"
+    fi
+  fi
+
+
+        if consul::isup; then
+          echo -e "\nWaiting for new events from Consul...\n"
+          # on each deploy event, the script call itself with the deploy-handler parameter
+          consul watch -type=event -name=deploy-job consul lock 'deploy/lock' $0 deploy-handler
+        else
+          exit_with_error "Server mode is available only on a server with consul deployed"
+        fi
+
+}
+
 
 show_syntax()
 {
@@ -631,14 +646,7 @@ main()
         deploy::handler
         ;;
       server)
-        if consul::isup; then
-          echo -e "\nWaiting for new events from Consul...\n"
-          # on each deploy event, the script call itself with the deploy-handler parameter
-          consul watch -type=event -name=deploy-job consul lock 'deploy/lock' $0 deploy-handler
-        else
-          exit_with_error "Server mode is available only on a server with consul deployed"
-        fi
-        shift
+        deploy::server
         ;;
       import)
         local target=${1:?"Missing parameter 'target', type $0 help for details"}
